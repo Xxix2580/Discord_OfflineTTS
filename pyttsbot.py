@@ -108,12 +108,7 @@ async def settings(ctx):
     await ctx.send(str(setting))
     return
 
-
-
 #issue-1 : Language.
 #-> https://stackoverflow.com/questions/65977155/change-pyttsx3-language
-#issue-2 : Linux Support.
-
-# URL for this bot : https://discord.com/api/oauth2/authorize?client_id=939206360187428934&permissions=274881067008&scope=bot
 client.run(setting.token)
             

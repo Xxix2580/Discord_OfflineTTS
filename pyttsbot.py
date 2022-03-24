@@ -62,10 +62,15 @@ async def leave(ctx):
 
 @client.command(pass_context=True)
 async def join(ctx):
-    print("Join")
-    channel = discord.utils.get(ctx.guild.voice_channels, name=ctx.message.author.voice.channel.name)
+    channel = ctx.author.voice.channel
     voice = discord.utils.get(client.voice_clients, guild=ctx.guild)
+    if(voice):
+        if(voice.is_connected):
+            #Already connected -> Force reconnect.
+            await voice.disconnect(force=True)
+    #channel = discord.utils.get(ctx.guild.voice_channels, name=ctx.message.author.voice.channel.name)
     await channel.connect()
+    return
     
 @client.command(pass_context=True)
 async def speak(ctx, msg : str):
@@ -102,6 +107,8 @@ async def set_speed(ctx, val:str):
 async def settings(ctx):
     await ctx.send(str(setting))
     return
+
+
 
 #issue-1 : Language.
 #-> https://stackoverflow.com/questions/65977155/change-pyttsx3-language

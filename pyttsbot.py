@@ -81,7 +81,7 @@ async def speak(ctx, msg : str):
     voice = discord.utils.get(client.voice_clients, guild=ctx.guild)
     engine.save_to_file(msg, 'speech.mp3')
     engine.runAndWait()
-    voice.play(discord.FFmpegPCMAudio('speech.mp3'))
+    voice.play(discord.FFmpegPCMAudio('./speech.mp3'))
     return
 
 @client.command(pass_context=True)

@@ -20,14 +20,21 @@ class Settings:
         retstr += "rate : {}\n".format(self.rate)
         return retstr
 
+
 class TTS:
     def __init__(self, rate):
         self.engine = pyttsx3.init()
         self.engine.setProperty('rate', rate)
+        self.engine.startLoop(False)
     
-    def start(self, msg, filename):
+    def speak_to_file(self, msg, filename):
         self.engine.save_to_file(msg, filename)
-        self.engine.runAndWait()
+        self.engine.iterate()
+        time.sleep(len(msg) * (1/setting.rate) + 0.2)
+        return
+    
+    def stop(self):
+        self.engine.endLoop()
         return
 
 
@@ -38,6 +45,8 @@ token_file.close()
 
 setting = Settings(token)
 client = commands.Bot(command_prefix=setting.prefix)
+
+tts = TTS(setting.rate)
 
 @client.event
 async def on_ready():
@@ -91,11 +100,7 @@ async def speak(ctx, msg : str):
     if not voice:
         await channel.connect()
     voice = discord.utils.get(client.voice_clients, guild=ctx.guild)
-    tts = TTS(setting.rate)
-    tts.start(msg, 'speech.mp3')
-    time.sleep(setting.delay)
-    #Because of bug of pyttsx3.
-    del tts
+    tts.speak_to_file(msg, 'speech.mp3')
     voice.play(discord.FFmpegPCMAudio('./speech.mp3'))
     #print('Spoken {}'.format(msg))
     return
@@ -115,8 +120,55 @@ async def set_msgchannel(ctx, val:str):
 @client.command(pass_context=True)
 async def set_speed(ctx, val:str):
     settings.rate = int(val)
-    engine.setProperty('rate', int(val))
+    tts.engine.setProperty('rate', int(val))
     await ctx.send('Setting.rate : {}'.format(int(val)))
+    return
+
+@client.command(pass_context=True)
+async def available_voices(ctx):
+    voices = tts.engine.getProperty('voices')
+    voice_str = ""
+    for voice in voices:
+        voice_str += (str(voice.id) +"\n")
+    await ctx.send('Available_Voices : \n{}'.format(voice_str))
+    return
+
+@client.command(pass_context=True)
+async def voice(ctx):
+    voice = tts.engine.getProperty('voice')
+    await ctx.send('Voice : {}'.format(str(voice)))
+    return
+
+@client.command(pass_context=True)
+async def set_voice(ctx, voice):
+    voices = tts.engine.getProperty('voices')
+    vid = 0
+    for v in voices:
+        if str(v.id) == str(voice):
+            await ctx.send('Found_Voice : {}'.format(str(v.id)))
+            vid = v.id
+            break
+    if not (vid == 0):
+        await ctx.send('Set_Voice : {}'.format(str(v.id)))
+        tts.engine.setProperty('voice', v.id)
+        tts.engine.iterate()
+    now_voice = tts.engine.getProperty('voice')
+    await ctx.send('Now_Voice : {}'.format(str(now_voice)))
+    return
+
+@client.command(pass_context=True)
+async def set_voice_force(ctx, voice):
+    await ctx.send('Set_Voice : {}'.format(voice))
+    tts.engine.setProperty('voice', voice)
+    tts.engine.iterate()
+    now_voice = tts.engine.getProperty('voice')
+    await ctx.send('Now_Voice : {}'.format(str(now_voice)))
+    return
+
+
+@client.command(pass_context=True)
+async def umjunsik(ctx):
+    await ctx.send('엄준식은 살아있다')
     return
 
 @client.command(pass_context=True)

@@ -1,6 +1,7 @@
 import discord
 import pyttsx3
 from discord.ext import commands
+import time
 
 class Settings:
     def __init__(self, token, msgchannel='pytts', prefix='//'):
@@ -9,6 +10,7 @@ class Settings:
         self.prefix = prefix
         self.rate = 170
         self.token = token
+        self.delay = 1.5
         return
     def __str__(self):
         retstr = "### Settings ###\n"
@@ -18,6 +20,17 @@ class Settings:
         retstr += "rate : {}\n".format(self.rate)
         return retstr
 
+class TTS:
+    def __init__(self, rate):
+        self.engine = pyttsx3.init()
+        self.engine.setProperty('rate', rate)
+    
+    def start(self, msg, filename):
+        self.engine.save_to_file(msg, filename)
+        self.engine.runAndWait()
+        return
+
+
 # Token for PyOfflineTTS_Bot :
 token_file = open("token.txt", "r")
 token = token_file.readline()
@@ -25,8 +38,6 @@ token_file.close()
 
 setting = Settings(token)
 client = commands.Bot(command_prefix=setting.prefix)
-engine = pyttsx3.init()
-engine.setProperty('rate', setting.rate)
 
 @client.event
 async def on_ready():
@@ -35,6 +46,7 @@ async def on_ready():
 
 @client.event
 async def on_message(message):
+    #print('OnMessage')
     if message.author == client.user:
         return
     if message.content.startswith(setting.prefix):
@@ -79,9 +91,13 @@ async def speak(ctx, msg : str):
     if not voice:
         await channel.connect()
     voice = discord.utils.get(client.voice_clients, guild=ctx.guild)
-    engine.save_to_file(msg, 'speech.mp3')
-    engine.runAndWait()
+    tts = TTS(setting.rate)
+    tts.start(msg, 'speech.mp3')
+    time.sleep(setting.delay)
+    #Because of bug of pyttsx3.
+    del tts
     voice.play(discord.FFmpegPCMAudio('./speech.mp3'))
+    #print('Spoken {}'.format(msg))
     return
 
 @client.command(pass_context=True)
